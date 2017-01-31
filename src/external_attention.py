@@ -1,5 +1,6 @@
 import tensorflow as tf
 import numpy as np
+import math
 
 # During training, we might want to discard the slowly progress module with a more meaningful sampler from external;
 # this script does just that.
@@ -17,14 +18,16 @@ import numpy as np
 if __name__ == "__main__":
 
     with tf.Session() as sess:
-        x = tf.Variable([[0.1, 0.1], [0.1, 0.1]], dtype=tf.float32, name="X")
-        e = tf.placeholder(dtype=tf.float32, shape=[None, 2, 2])
-        t = tf.constant([[-0.5, 0.5], [1.0, -1.0]], dtype=tf.float32)
+        x = tf.Variable([[0.0, 0.0, 0.0, 0.0]], dtype=tf.float32, name="X")
+        e = tf.placeholder(dtype=tf.float32, shape=[None, 4])
+        t = tf.constant([[-0.5, 0.5, 1.0, -1.0]], dtype=tf.float32)
 
-        r = tf.clip_by_average_norm(tf.reduce_mean(0.5 / tf.squared_difference(e, t), axis=[1, 2]), 1.0)
+        r = tf.exp(-tf.reduce_sum(tf.squared_difference(e, t) / 2, axis=[1], keep_dims=True))
+        sr = tf.reduce_sum(r)
 
-        loss = tf.reduce_mean(tf.squared_difference(e, x), axis=[1, 2])
-        opt = tf.train.AdamOptimizer(0.1)
+        # p = tf.reduce_sum(e * r, axis=[0], keep_dims=True) / sr
+        loss = tf.reduce_sum(tf.squared_difference(e, x), axis=[1], keep_dims=True)
+        opt = tf.train.AdamOptimizer(0.01)
 
         params = tf.trainable_variables()
         print ' '.join(str(p.name) for p in params)
@@ -32,9 +35,10 @@ if __name__ == "__main__":
 
         # by default, most optimizer perform negative gradient update (descending)
         training_op = opt.apply_gradients(zip(g_lx, params))
+        # training_op = opt.minimize(loss)
 
         sess.run(tf.global_variables_initializer())
 
         for i in xrange(1000):
-            print sess.run((r, training_op), feed_dict={e: np.random.rand(10, 2, 2) * 4 - 2})
+            print sess.run((training_op), feed_dict={e: np.random.rand(1000, 4) * 10 - 5})
         print sess.run(x)
