@@ -16,7 +16,7 @@ class AffineCell(tf.nn.rnn_cell.RNNCell):
         self.layers = layers.Layers([1 + 6, self.lstm_state_size], [tf.tanh])
 
         # internal lstm produces sigma + alpha
-        self.lstm = tf.nn.rnn_cell.LSTMCell(self.lstm_state_size, forget_bias=1.0, state_is_tuple=True, num_proj=6 + 6 + 1)
+        self.lstm = tf.nn.rnn_cell.LSTMCell(self.lstm_state_size, forget_bias=1.0, state_is_tuple=True, num_proj=6 + 6)
 
     @property
     def state_size(self):
@@ -39,6 +39,7 @@ class AffineCell(tf.nn.rnn_cell.RNNCell):
     def __call__(self, inputs, state, scope=None):
 
         # split inputs: value, step, grad
+        value = tf.slice(inputs, [0, 0], [-1, 1])
         step = tf.slice(inputs, [0, 1], [-1, 6])
         # grad = tf.slice(inputs, [0, 7], [-1, 6])
 
@@ -50,12 +51,11 @@ class AffineCell(tf.nn.rnn_cell.RNNCell):
 
         omega = tf.slice(lstm_output, [0, 0], [-1, 6])
         sigma = tf.slice(lstm_output, [0, 6], [-1, 6])
-        alpha = tf.slice(lstm_output, [0, 12], [-1, 1])
 
         # when tf permits, intercept alpha here and use policy gradient to sample
-        selector = tf.sigmoid(alpha)
+        alpha = tf.sigmoid(value - 10)
 
-        output = previous + (step + sigma) * (1 - selector) + (omega) * (selector)
+        output = previous + (step + sigma) * (1 - alpha) + (omega) * (alpha)
         return output, (output, lstm_out_state)
 
 
