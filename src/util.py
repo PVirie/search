@@ -87,6 +87,13 @@ def create_dimension_expander_indicator(kernel, dx, three_sigmas):
     return t / np.sum(t, axis=0)
 
 
+def xavier_init(fan_in, fan_out, constant=0.1):
+    """ Xavier initialization of network weights"""
+    low = -constant * np.sqrt(6.0 / (fan_in + fan_out))
+    high = constant * np.sqrt(6.0 / (fan_in + fan_out))
+    return np.random.uniform(low=low, high=high, size=(fan_in, fan_out))
+
+
 if __name__ == "__main__":
     np.set_printoptions(precision=2, linewidth=255)
     print "Run test util.py"
