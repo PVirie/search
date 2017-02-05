@@ -150,7 +150,7 @@ if __name__ == "__main__":
         thetas = tf.constant(np.asarray([[1, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
         transformed = Invert_Transformer(imgs, thetas, (60, 60), (200, 200), 1.0)
 
-        thetas2 = tf.constant(np.asarray([[2, 0, 0, 0, 2, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
+        thetas2 = tf.constant(np.asarray([[1, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
         backward = transformer.transformer(transformed, thetas2, (40, 40))
         sess.run(tf.global_variables_initializer())
         bak, out = sess.run((backward, transformed), feed_dict={})

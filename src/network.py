@@ -21,16 +21,19 @@ class Network():
         self.blur = tf.placeholder(tf.float32)
 
         sqr_step = int(math.sqrt(total_steps))
-        sx = template_size[0] / canvas_size[0]
-        sy = template_size[1] / canvas_size[1]
+        sx = template_size[0] * 1.0 / canvas_size[0]
+        sy = template_size[1] * 1.0 / canvas_size[1]
         dx = 2 * (1 - sx) / sqr_step
         dy = 2 * (1 - sy) / sqr_step
+
+        print sx, sy, dx, dy
 
         with tf.variable_scope("model"):
             self.cell = cell.AffineCell()
             state = self.cell.init_state(batches)
             input = self.cell.init_input(batches)
             self.total_match = 0
+            self.matches = []
             for i in xrange(sqr_step):
                 for j in xrange(sqr_step):
                     if i > 0 or j > 0:
@@ -38,8 +41,9 @@ class Network():
                     output, state = self.cell(tf.stop_gradient(input), state)
                     gen = transformer.transformer(self.gpu_examples, output, template_size)
                     match = tf.exp(tf.reduce_mean(-tf.squared_difference(self.gpu_templates, gen), axis=[1, 2, 3]) / 2)
-                    step = tf.tile(tf.constant([[1, 0, sx + dx * j, 0, 1, sy + dy * i]], dtype=tf.float32), [batches, 1])
+                    step = tf.tile(tf.constant([[0, 0, sx + dx * j - 1, 0, 0, sy + dy * i - 1]], dtype=tf.float32), [batches, 1])
                     input = tf.concat(1, [tf.reshape(match, [-1, 1]), step])
+                    self.matches.append(output)
                     self.total_match = self.total_match + tf.reduce_sum(match)
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
@@ -80,5 +84,9 @@ class Network():
         self.saver.restore(self.sess, tf.train.latest_checkpoint(directory))
 
     def draw(self, templates, examples):
-        drawn = self.sess.run(self.gen, feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.blur: 1.0})
-        return drawn
+        drawn, output = self.sess.run((self.gen, self.outputs), feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.blur: 1.0})
+        return drawn, output
+
+    def debug(self, templates, examples):
+        matches = self.sess.run((self.matches), feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.blur: 1.0})
+        return matches

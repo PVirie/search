@@ -8,6 +8,6 @@ templates, examples = gen.gen_batch(100, input_size=template_size, output_size=c
 print "Figures >>", templates.shape
 print "Examples >>", examples.shape
 
-batch_size = 5
-nn = ann.Network(batch_size, template_size, canvas_size, 20)
+batch_size = 20
+nn = ann.Network(batch_size, template_size, canvas_size, 25)
 nn.train(templates, examples, "../artifacts/" + "test_weight", batch_size=batch_size, max_iteration=100, continue_from_last=False)
