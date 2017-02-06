@@ -19,6 +19,8 @@ class Network():
         self.gpu_templates = tf.placeholder(tf.float32, [None, template_size[0], template_size[1], 1])
         self.gpu_examples = tf.placeholder(tf.float32, [None, canvas_size[0], canvas_size[1], 1])
         self.blur = tf.placeholder(tf.float32)
+        temp = self.gpu_templates + 1e-6
+        norm_template = temp / tf.reduce_sum(temp, axis=[1, 2, 3], keep_dims=True)
 
         sqr_step = int(math.sqrt(total_steps))
         sx = template_size[0] * 1.0 / canvas_size[0]
@@ -39,11 +41,13 @@ class Network():
                     if i > 0 or j > 0:
                         tf.get_variable_scope().reuse_variables()
                     output, state = self.cell(tf.stop_gradient(input), state)
-                    gen = transformer.transformer(self.gpu_examples, output, template_size)
-                    match = tf.exp(tf.reduce_mean(-tf.squared_difference(self.gpu_templates, gen), axis=[1, 2, 3]) / 2)
-                    step = tf.tile(tf.constant([[0, 0, sx + dx * j - 1, 0, 0, sy + dy * i - 1]], dtype=tf.float32), [batches, 1])
+                    gen = transformer.transformer(self.gpu_examples, output, template_size) + 1e-6
+                    norm_gen = gen / (tf.reduce_sum(gen, axis=[1, 2, 3], keep_dims=True))
+                    # match = tf.exp(tf.reduce_mean(-tf.squared_difference(self.gpu_templates, gen), axis=[1, 2, 3]) / 0.1)
+                    match = tf.reduce_mean(norm_template * tf.log(norm_gen) + norm_gen * tf.log(norm_template), axis=[1, 2, 3])
+                    step = tf.tile(tf.constant([[1.0, 0, sx + dx * j, 0, 1.0, sy + dy * i]], dtype=tf.float32), [batches, 1])
                     input = tf.concat(1, [tf.reshape(match, [-1, 1]), step])
-                    self.matches.append(output)
+                    self.matches.append(match)
                     self.total_match = self.total_match + tf.reduce_sum(match)
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")

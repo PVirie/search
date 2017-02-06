@@ -33,7 +33,7 @@ class AffineCell(tf.nn.rnn_cell.RNNCell):
 
     def init_input(self, batch_size):
         match = tf.zeros([batch_size, 1], dtype=tf.float32)
-        step = tf.tile(tf.constant([[0, 0, 0, 0, 0, 0]], dtype=tf.float32), [batch_size, 1])
+        step = tf.tile(tf.constant([[1, 0, 0, 0, 1, 0]], dtype=tf.float32), [batch_size, 1])
         return tf.concat(1, [match, step])
 
     def __call__(self, inputs, state, scope=None):
