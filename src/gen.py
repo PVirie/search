@@ -72,6 +72,7 @@ def gen_batch(batches, input_size=(40, 40), output_size=(200, 200)):
 
 if __name__ == "__main__":
     t, g, v = gen_batch(100)
+    print v
     ts = util.make_tile(np.reshape(t, (t.shape[0], t.shape[1], t.shape[2], 1)), 400, 400, False)
     gs = util.make_tile(np.reshape(g, (g.shape[0], g.shape[1], g.shape[2], 1)), 800, 800, False)
     cv2.imshow("template", ts)

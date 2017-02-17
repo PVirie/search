@@ -14,7 +14,7 @@ class AffineCell(tf.contrib.rnn.RNNCell):
         self.layers = layers.Layers([7, self.lstm_state_size], [tf.tanh])
 
         # internal lstm produces mean + var
-        self.lstm = tf.contrib.rnn.LSTMCell(self.lstm_state_size, forget_bias=1.0, state_is_tuple=True, num_proj=6 + 6)
+        self.lstm = tf.contrib.rnn.LSTMCell(self.lstm_state_size, initializer=tf.random_normal_initializer(0, 0.01), forget_bias=1.0, state_is_tuple=True, num_proj=6 + 6)
 
     @property
     def state_size(self):
@@ -33,7 +33,7 @@ class AffineCell(tf.contrib.rnn.RNNCell):
         lstm_output, lstm_out_state = self.lstm(self.layers(inputs), state)
 
         out_mean = tf.slice(lstm_output, [0, 0], [-1, 6]) + tf.slice(inputs, [0, 1], [-1, 6])
-        out_var = tf.tanh(tf.slice(lstm_output, [0, 6], [-1, 6])) + tf.constant([[1, 1, 1, 1, 1, 1]], dtype=tf.float32)
+        out_var = tf.tanh(tf.slice(lstm_output, [0, 6], [-1, 6])) + tf.constant([[1.001, 1.001, 1.001, 1.001, 1.001, 1.001]], dtype=tf.float32)
 
         return (out_mean, out_var), lstm_out_state
 

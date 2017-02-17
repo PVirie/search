@@ -87,7 +87,7 @@ def create_dimension_expander_indicator(kernel, dx, three_sigmas):
     return t / np.sum(t, axis=0)
 
 
-def xavier_init(fan_in, fan_out, constant=0.1):
+def xavier_init(fan_in, fan_out, constant=0.01):
     """ Xavier initialization of network weights"""
     low = -constant * np.sqrt(6.0 / (fan_in + fan_out))
     high = constant * np.sqrt(6.0 / (fan_in + fan_out))
