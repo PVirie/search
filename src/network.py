@@ -49,17 +49,20 @@ class Network():
                 losses.append(-independent_normal_distribution(output, means, variances))
                 matches.append(match)
 
-            total_match = 0
+            cum_match = 0
+            total_matches = 0
             total_losses = 0
             for i in xrange(total_steps - 1, -1, -1):
-                total_match = total_match * 0.99 + matches[i]
-                total_losses = total_losses + tf.reduce_mean(tf.stop_gradient(total_match) * losses[i])
+                cum_match = cum_match * 0.99 + matches[i]
+                total_losses = total_losses + tf.reduce_mean(tf.stop_gradient(cum_match) * losses[i])
+                total_matches = total_matches + cum_match
 
             self.total_losses = tf.reduce_mean(total_losses)
+            self.total_matches = tf.reduce_mean(total_matches)
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
 
-        self.training_op = tf.train.AdamOptimizer(0.01).minimize(self.total_losses, var_list=scope)
+        self.training_op = tf.train.AdamOptimizer(0.001).minimize(self.total_losses, var_list=scope)
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
         self.outputs = output
@@ -80,7 +83,7 @@ class Network():
                 tb = templates[(b * batch_size):((b + 1) * batch_size), ...]
                 eb = examples[(b * batch_size):((b + 1) * batch_size), ...]
                 vb = true_values[(b * batch_size):((b + 1) * batch_size), ...]
-                _, loss = self.sess.run((self.training_op, self.total_losses), feed_dict={self.gpu_templates: expand_last_dim(tb), self.gpu_examples: expand_last_dim(eb), self.gpu_true: vb, self.blur: blur})
+                _, loss = self.sess.run((self.training_op, self.total_matches), feed_dict={self.gpu_templates: expand_last_dim(tb), self.gpu_examples: expand_last_dim(eb), self.gpu_true: vb, self.blur: blur})
                 sum_loss += loss
             print sum_loss / total_batches
             if step % 100 == 0:
@@ -95,8 +98,8 @@ class Network():
     def load_last(self, directory):
         self.saver.restore(self.sess, tf.train.latest_checkpoint(directory))
 
-    def draw(self, templates, examples):
-        drawn = self.sess.run(self.gen, feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.blur: 1.0})
+    def draw(self, templates, examples, true_values):
+        drawn = self.sess.run(self.gen, feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
         return drawn
 
 

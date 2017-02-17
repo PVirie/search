@@ -33,7 +33,7 @@ class AffineCell(tf.contrib.rnn.RNNCell):
         lstm_output, lstm_out_state = self.lstm(self.layers(inputs), state)
 
         out_mean = tf.slice(lstm_output, [0, 0], [-1, 6]) + tf.slice(inputs, [0, 1], [-1, 6])
-        out_var = tf.abs(tf.slice(lstm_output, [0, 6], [-1, 6]) + tf.constant([[1, 1, 1, 1, 1, 1]], dtype=tf.float32))
+        out_var = tf.tanh(tf.slice(lstm_output, [0, 6], [-1, 6])) + tf.constant([[1, 1, 1, 1, 1, 1]], dtype=tf.float32)
 
         return (out_mean, out_var), lstm_out_state
 
