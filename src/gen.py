@@ -44,13 +44,13 @@ def random_thetas(shape=(1000, 1000), object_shape=(220, 220)):
 def gen_transform(shape, thetas, index=randint(0, len(data) - 1)):
     if thetas is None:
         thetas = random_thetas(shape, data[index].shape)
-    return cv2.warpAffine(data[index], thetas, shape)
+    return cv2.warpAffine(data[index], thetas, shape), thetas
 
 
 def view_gen(shape=(1000, 1000), thetas=None):
     imgs = []
     for i in xrange(3):
-        imgs.append(gen_transform(shape, thetas, randint(0, len(data) - 1)))
+        imgs.append(gen_transform(shape, thetas, randint(0, len(data) - 1))[0])
     cv2.imshow("gen", util.blend_images(imgs))
     cv2.waitKey(0)
 
@@ -58,15 +58,20 @@ def view_gen(shape=(1000, 1000), thetas=None):
 def gen_batch(batches, input_size=(40, 40), output_size=(200, 200)):
     t_ = []
     g_ = []
+    v_ = np.zeros((batches, 6), dtype=np.float32)
     for i in xrange(batches):
         index = randint(0, len(data) - 1)
         t_.append(template[index])
-        g_.append(gen_transform((1000, 1000), None, index))
-    return util.batch_resize(t_, input_size), util.batch_resize(g_, output_size)
+        g, v = gen_transform((1000, 1000), None, index)
+        g_.append(g)
+        v[0, 2] = v[0, 2] * 2.0 / 1000 - 1.0
+        v[1, 2] = v[1, 2] * 2.0 / 1000 - 1.0
+        v_[i, ...] = np.reshape(v, (1, 6))
+    return util.batch_resize(t_, input_size), util.batch_resize(g_, output_size), v_
 
 
 if __name__ == "__main__":
-    t, g = gen_batch(100)
+    t, g, v = gen_batch(100)
     ts = util.make_tile(np.reshape(t, (t.shape[0], t.shape[1], t.shape[2], 1)), 400, 400, False)
     gs = util.make_tile(np.reshape(g, (g.shape[0], g.shape[1], g.shape[2], 1)), 800, 800, False)
     cv2.imshow("template", ts)

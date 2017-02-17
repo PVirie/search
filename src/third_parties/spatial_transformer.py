@@ -53,7 +53,7 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
     def _repeat(x, n_repeats):
         with tf.variable_scope('_repeat'):
             rep = tf.transpose(
-                tf.expand_dims(tf.ones(shape=tf.pack([n_repeats, ])), 1), [1, 0])
+                tf.expand_dims(tf.ones(shape=tf.stack([n_repeats, ])), 1), [1, 0])
             rep = tf.cast(rep, 'int32')
             x = tf.matmul(tf.reshape(x, (-1, 1)), rep)
             return tf.reshape(x, [-1])
@@ -98,7 +98,7 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
 
             # use indices to lookup pixels in the flat image and restore
             # channels dim
-            im_flat = tf.reshape(im, tf.pack([-1, channels]))
+            im_flat = tf.reshape(im, tf.stack([-1, channels]))
             im_flat = tf.cast(im_flat, 'float32')
             Ia = tf.gather(im_flat, idx_a)
             Ib = tf.gather(im_flat, idx_b)
@@ -131,7 +131,7 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
             y_t_flat = tf.reshape(y_t, (1, -1))
 
             ones = tf.ones_like(x_t_flat)
-            grid = tf.concat(concat_dim=0, values=[x_t_flat, y_t_flat, ones])
+            grid = tf.concat([x_t_flat, y_t_flat, ones], 0)
             return grid
 
     def _transform(theta, input_dim, out_size):
@@ -145,7 +145,7 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
             R = tf.slice(theta, [0, 0], [-1, 2])
             T = tf.slice(theta, [0, 2], [-1, 1])
             T_n = tf.reshape(tf.reshape(T + 1, [-1, 2]) * tf.convert_to_tensor([width / 2, height / 2], dtype=tf.float32), [-1, 1])
-            A = tf.concat(concat_dim=1, values=[R, T_n])
+            A = tf.concat([R, T_n], 1)
 
             # grid of (x_t, y_t, 1), eq (1) in ref [1]
             out_height = out_size[0]
@@ -164,7 +164,7 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
                 out_size)
 
             output = tf.reshape(
-                input_transformed, tf.pack([num_batch, out_height, out_width, num_channels]))
+                input_transformed, tf.stack([num_batch, out_height, out_width, num_channels]))
             return output
 
     with tf.variable_scope(name):

@@ -90,7 +90,7 @@ def Invert_Transformer(U, theta, kernel_size, out_size, blur=100, name='InvertTr
             x_t, y_t = tf.meshgrid(tf.linspace(-width / 2.0, width / 2.0, width), tf.linspace(-height / 2.0, height / 2.0, height))
             x_t_flat = tf.reshape(x_t, (1, -1))
             y_t_flat = tf.reshape(y_t, (1, -1))
-            grid = tf.concat(concat_dim=0, values=[x_t_flat, y_t_flat])
+            grid = tf.concat([x_t_flat, y_t_flat], 0)
             return grid
 
     def _rotate(theta, input_dim, out_size):
@@ -150,7 +150,7 @@ if __name__ == "__main__":
         thetas = tf.constant(np.asarray([[1, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
         transformed = Invert_Transformer(imgs, thetas, (60, 60), (200, 200), 1.0)
 
-        thetas2 = tf.constant(np.asarray([[2, 0, 0, 0, 2, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
+        thetas2 = tf.constant(np.asarray([[1, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
         backward = transformer.transformer(transformed, thetas2, (40, 40))
         sess.run(tf.global_variables_initializer())
         bak, out = sess.run((backward, transformed), feed_dict={})
