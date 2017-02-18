@@ -23,6 +23,7 @@ class Network():
         self.gpu_true = tf.placeholder(tf.float32, [None, 6])
         self.gpu_templates = tf.placeholder(tf.float32, [None, template_size[0], template_size[1], 1])
         self.gpu_examples = tf.placeholder(tf.float32, [None, canvas_size[0], canvas_size[1], 1])
+        self.template_sum = tf.reduce_sum(self.gpu_templates, axis=[1, 2, 3])
         self.blur = tf.placeholder(tf.float32)
 
         with tf.variable_scope("model"):
@@ -31,16 +32,16 @@ class Network():
             means = tf.constant([[1.0, 0.0, 0, 0.0, 1.0, 0]], dtype=np.float32)
             variances = tf.constant([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]], dtype=np.float32)
             total_matches = 0
+            total_likelihood = 0
             for i in xrange(total_steps):
                 if i > 0:
                     tf.get_variable_scope().reuse_variables()
 
                 output = means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances
                 # gen = transformer.transformer(self.gpu_examples, output, template_size)
-                # match = tf.exp(-tf.reduce_sum(self.gpu_templates * (1 - gen), axis=[1, 2, 3]))
-                # if i == total_steps - 1:
-                #     self.loss = match * -1 * independent_normal_distribution(output, means, variances)
-                match = tf.exp(-tf.reduce_mean(tf.squared_difference(output, self.gpu_true) / 2, axis=[1]))
+                # match = 1 - tf.reduce_sum(self.gpu_templates * (1 - gen), axis=[1, 2, 3]) / self.template_sum
+                # likelihood = tf.stop_gradient(match) * independent_normal_distribution(tf.stop_gradient(output), means, variances)
+                match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * 2, axis=[1])
                 input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(input, state)
@@ -49,13 +50,15 @@ class Network():
 
                 # total_matches = total_matches + tf.reduce_mean(match)
                 total_matches = tf.reduce_sum(match)
+                # total_likelihood = total_likelihood + tf.reduce_sum(likelihood)
 
             self.total_matches = total_matches
+            self.total_likelihood = total_likelihood
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
         print "Total variable", [v.name for v in scope]
 
-        # self.training_op = tf.train.AdamOptimizer(0.001).minimize(self.loss, var_list=scope)
+        # self.training_op = tf.train.AdamOptimizer(0.001).minimize(-self.total_likelihood, var_list=scope)
         self.training_op = tf.train.AdamOptimizer(0.001).minimize(-self.total_matches, var_list=scope)
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
