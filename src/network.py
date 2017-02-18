@@ -28,41 +28,35 @@ class Network():
         with tf.variable_scope("model"):
             self.cell = cell.AffineCell()
             state = self.cell.init_state(batches)
-            means = tf.constant([[1.0, 0.0, 0.0, 0.0, 1.0, 0]], dtype=np.float32)
+            means = tf.constant([[1.0, 0.0, 0, 0.0, 1.0, 0]], dtype=np.float32)
             variances = tf.constant([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]], dtype=np.float32)
-            matches = []
-            losses = []
+            total_matches = 0
             for i in xrange(total_steps):
                 if i > 0:
                     tf.get_variable_scope().reuse_variables()
 
-                output = tf.stop_gradient(means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances)
-                # gen = transformer.transformer(self.gpu_examples, step, template_size)
-                # match = tf.exp(-tf.reduce_mean(tf.squared_difference(self.gpu_templates, gen), axis=[1, 2, 3]))
-                match = tf.exp(-tf.reduce_sum(tf.squared_difference(output, self.gpu_true) / 2, axis=[1]))
-                input = tf.concat([tf.reshape(match, [-1, 1]), output], 1)
+                output = means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances
+                # gen = transformer.transformer(self.gpu_examples, output, template_size)
+                # match = tf.exp(-tf.reduce_sum(self.gpu_templates * (1 - gen), axis=[1, 2, 3]))
+                # if i == total_steps - 1:
+                #     self.loss = match * -1 * independent_normal_distribution(output, means, variances)
+                match = tf.exp(-tf.reduce_mean(tf.squared_difference(output, self.gpu_true) / 2, axis=[1]))
+                input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(input, state)
                 means = output_tuple[0]
                 variances = output_tuple[1]
 
-                losses.append(-independent_normal_distribution(output, means, variances))
-                matches.append(match)
+                # total_matches = total_matches + tf.reduce_mean(match)
+                total_matches = tf.reduce_sum(match)
 
-            cum_match = 0
-            total_matches = 0
-            total_losses = 0
-            for i in xrange(total_steps - 1, -1, -1):
-                cum_match = matches[i] + cum_match * 0.8
-                total_losses = total_losses + tf.stop_gradient(cum_match) * losses[i]
-                total_matches = total_matches + cum_match
-
-            self.total_losses = tf.reduce_mean(total_losses)
-            self.total_matches = tf.reduce_mean(total_matches)
+            self.total_matches = total_matches
 
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
+        print "Total variable", [v.name for v in scope]
 
-        self.training_op = tf.train.AdamOptimizer(0.0001).minimize(self.total_losses, var_list=scope)
+        # self.training_op = tf.train.AdamOptimizer(0.001).minimize(self.loss, var_list=scope)
+        self.training_op = tf.train.AdamOptimizer(0.001).minimize(-self.total_matches, var_list=scope)
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
         self.outputs = output
