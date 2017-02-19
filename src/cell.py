@@ -7,7 +7,7 @@ import util
 class AffineCell(tf.contrib.rnn.RNNCell):
 
     def __init__(self):
-        self.lstm_state_size = 40
+        self.lstm_state_size = 100
         self.state_size_ = (self.lstm_state_size, self.lstm_state_size)
         self.output_size_ = (6, 6)
 
@@ -35,8 +35,8 @@ class AffineCell(tf.contrib.rnn.RNNCell):
 
         lstm_output, lstm_out_state = self.rnn(self.layers(inputs), state)
         projected_output = self.projection_layers(lstm_output)
-        out_mean = tf.slice(projected_output, [0, 0], [-1, 6]) * 0.2 + tf.slice(inputs, [0, 1], [-1, 6])
-        out_var = tf.slice(projected_output, [0, 6], [-1, 6]) * 0.1 + tf.constant([[0.101, 0.101, 0.101, 0.101, 0.101, 0.101]], dtype=tf.float32)
+        out_mean = tf.slice(projected_output, [0, 0], [-1, 6]) * 0.4 + tf.slice(inputs, [0, 1], [-1, 6])
+        out_var = tf.slice(projected_output, [0, 6], [-1, 6]) * 0.2 + tf.constant([[0.2001, 0.2001, 0.2001, 0.2001, 0.2001, 0.2001]], dtype=tf.float32)
 
         return (out_mean, out_var), lstm_out_state
 

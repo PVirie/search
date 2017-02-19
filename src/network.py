@@ -29,8 +29,9 @@ class Network():
         with tf.variable_scope("model"):
             self.cell = cell.AffineCell()
             state = self.cell.init_state(batches)
-            means = tf.constant([[1.0, 0.0, 0, 0.0, 1.0, 0]], dtype=np.float32)
-            variances = tf.constant([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]], dtype=np.float32)
+            means = tf.constant([[1.0, 0.0, 0.0, 0.0, 1.0, 0.0]], dtype=np.float32)
+            variances = tf.constant([[0.2, 0.2, 0.2, 0.2, 0.2, 0.2]], dtype=np.float32)
+            weights = tf.constant([[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]], dtype=np.float32)
             total_matches = 0
             total_likelihood = 0
             for i in xrange(total_steps):
@@ -41,7 +42,7 @@ class Network():
                 # gen = transformer.transformer(self.gpu_examples, output, template_size)
                 # match = 1 - tf.reduce_sum(self.gpu_templates * (1 - gen), axis=[1, 2, 3]) / self.template_sum
                 # likelihood = tf.stop_gradient(match) * independent_normal_distribution(tf.stop_gradient(output), means, variances)
-                match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * 2, axis=[1])
+                match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
                 input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(input, state)
@@ -97,8 +98,8 @@ class Network():
         self.saver.restore(self.sess, tf.train.latest_checkpoint(directory))
 
     def draw(self, templates, examples, true_values):
-        drawn = self.sess.run(self.gen, feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
-        return drawn
+        drawn, values = self.sess.run((self.gen, self.outputs), feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
+        return drawn, values
 
 
 if __name__ == "__main__":

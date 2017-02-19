@@ -15,7 +15,7 @@ print "Examples >>", examples.shape
 print "Thetas >>", true_values.shape
 
 batch_size = 100
-nn = ann.Network(batch_size, template_size, canvas_size, 100)
+nn = ann.Network(batch_size, template_size, canvas_size, 60)
 if args.cont:
     nn.load_session("../artifacts/" + "test_weight")
 nn.train(templates, examples, true_values, "../artifacts/" + "test_weight", batch_size=batch_size, max_iteration=10000, continue_from_last=False)
