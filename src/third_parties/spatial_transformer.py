@@ -70,7 +70,6 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
             y = tf.cast(y, 'float32')
             out_height = out_size[0]
             out_width = out_size[1]
-            zero = tf.zeros([], dtype='int32')
             max_y = tf.cast(tf.shape(im)[1] - 1, 'int32')
             max_x = tf.cast(tf.shape(im)[2] - 1, 'int32')
 
@@ -81,10 +80,10 @@ def transformer(U, theta, out_size, name='SpatialTransformer', **kwargs):
             y1 = y0 + 1
 
             # prevent out of bound
-            x0 = tf.clip_by_value(x0, zero, max_x)
-            x1 = tf.clip_by_value(x1, zero, max_x)
-            y0 = tf.clip_by_value(y0, zero, max_y)
-            y1 = tf.clip_by_value(y1, zero, max_y)
+            x0 = tf.clip_by_value(x0, 0, max_x)
+            x1 = tf.clip_by_value(x1, 0, max_x)
+            y0 = tf.clip_by_value(y0, 0, max_y)
+            y1 = tf.clip_by_value(y1, 0, max_y)
 
             dim2 = width
             dim1 = width * height

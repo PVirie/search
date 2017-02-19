@@ -41,10 +41,10 @@ def random_thetas(shape=(1000, 1000), object_shape=(220, 220)):
                      [math.sin(t) * sx, math.cos(t) * sy, ty]], dtype=np.float32)
 
 
-def gen_transform(shape, thetas, index=randint(0, len(data) - 1)):
+def gen_transform(shape, thetas, index=randint(0, len(data) - 1), kernel=(1, 1)):
     if thetas is None:
         thetas = random_thetas(shape, data[index].shape)
-    return cv2.warpAffine(data[index], thetas, shape), thetas
+    return cv2.blur(cv2.warpAffine(data[index], thetas, shape), kernel), thetas
 
 
 def view_gen(shape=(1000, 1000), thetas=None):
@@ -55,14 +55,14 @@ def view_gen(shape=(1000, 1000), thetas=None):
     cv2.waitKey(0)
 
 
-def gen_batch(batches, input_size=(40, 40), output_size=(200, 200)):
+def gen_batch(batches, input_size=(40, 40), output_size=(200, 200), blur=1.0):
     t_ = []
     g_ = []
     v_ = np.zeros((batches, 6), dtype=np.float32)
     for i in xrange(batches):
         index = randint(0, len(data) - 1)
         t_.append(template[index])
-        g, v = gen_transform((1000, 1000), None, index)
+        g, v = gen_transform((1000, 1000), None, index, (int(output_size[0] * blur), int(output_size[1] * blur)))
         g_.append(g)
         v[0, 2] = v[0, 2] * 2.0 / 1000 - 1.0
         v[1, 2] = v[1, 2] * 2.0 / 1000 - 1.0
@@ -71,7 +71,7 @@ def gen_batch(batches, input_size=(40, 40), output_size=(200, 200)):
 
 
 if __name__ == "__main__":
-    t, g, v = gen_batch(100)
+    t, g, v = gen_batch(100, blur=0.2)
     print v
     ts = util.make_tile(np.reshape(t, (t.shape[0], t.shape[1], t.shape[2], 1)), 400, 400, False)
     gs = util.make_tile(np.reshape(g, (g.shape[0], g.shape[1], g.shape[2], 1)), 800, 800, False)

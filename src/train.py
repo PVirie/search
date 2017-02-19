@@ -8,7 +8,7 @@ args = parser.parse_args()
 
 template_size = (20, 20)
 canvas_size = (50, 50)
-templates, examples, true_values = gen.gen_batch(1000, input_size=template_size, output_size=canvas_size)
+templates, examples, true_values = gen.gen_batch(1000, input_size=template_size, output_size=canvas_size, blur=0.2)
 
 print "Figures >>", templates.shape
 print "Examples >>", examples.shape
