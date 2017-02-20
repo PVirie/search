@@ -15,7 +15,7 @@ def independent_normal_distribution(xs, means, variances):
 
 
 def compute_pixel_match(templates, template_sum, examples, thetas, size):
-    gen = transformer.transformer(examples, thetas, thetas)
+    gen = transformer.transformer(examples, thetas, size)
     gen_sum = tf.reduce_sum(gen, axis=[1, 2, 3]) + 1e-8
     match = tf.reduce_sum(templates * gen, axis=[1, 2, 3]) / (template_sum * gen_sum)
     return match
@@ -46,11 +46,11 @@ class Network():
                     tf.get_variable_scope().reuse_variables()
 
                 output = means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances
-                # match = compute_pixel_match(self.gpu_examples, self.template_sum, self.gpu_examples, output, template_size)
-                # match_means = compute_pixel_match(self.gpu_examples, self.template_sum, self.gpu_examples, means, template_size)
-                match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
-                match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
-                likelihood = tf.stop_gradient(tf.maximum(match - match_means, 0)) * independent_normal_distribution(tf.stop_gradient(output), means, variances)
+                match = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, output, template_size)
+                match_means = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, means, template_size)
+                # match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
+                # match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
+                likelihood = tf.stop_gradient(tf.maximum(match - match_means, 0.0)) * independent_normal_distribution(tf.stop_gradient(output), means, variances)
                 input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(input, state)
