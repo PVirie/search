@@ -14,6 +14,13 @@ def independent_normal_distribution(xs, means, variances):
     return tf.exp(-tf.reduce_sum(tf.squared_difference(xs, means) / (2 * variances), axis=[1])) / (tf.sqrt(tf.reduce_prod(2 * math.pi * variances, axis=[1])))
 
 
+def compute_pixel_match(templates, template_sum, examples, thetas, size):
+    gen = transformer.transformer(examples, thetas, thetas)
+    gen_sum = tf.reduce_sum(gen, axis=[1, 2, 3]) + 1e-8
+    match = tf.reduce_sum(templates * gen, axis=[1, 2, 3]) / (template_sum * gen_sum)
+    return match
+
+
 class Network():
 
     def __init__(self, batches, template_size, canvas_size, total_steps=10):
@@ -39,12 +46,11 @@ class Network():
                     tf.get_variable_scope().reuse_variables()
 
                 output = means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances
-                # gen = transformer.transformer(self.gpu_examples, output, template_size)
-                # gen_sum = tf.reduce_sum(gen, axis=[1, 2, 3]) + 1e-8
-                # match = tf.reduce_sum(self.gpu_templates * gen, axis=[1, 2, 3]) / (self.template_sum * gen_sum)
+                # match = compute_pixel_match(self.gpu_examples, self.template_sum, self.gpu_examples, output, template_size)
+                # match_means = compute_pixel_match(self.gpu_examples, self.template_sum, self.gpu_examples, means, template_size)
                 match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
                 match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
-                likelihood = tf.stop_gradient(match - match_means) * independent_normal_distribution(tf.stop_gradient(output), means, variances)
+                likelihood = tf.stop_gradient(tf.maximum(match - match_means, 0)) * independent_normal_distribution(tf.stop_gradient(output), means, variances)
                 input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(input, state)
@@ -62,7 +68,7 @@ class Network():
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
         print "Total variable", [v.name for v in scope]
 
-        self.training_op = tf.train.AdamOptimizer(0.0001).minimize(-self.total_likelihood, var_list=scope)
+        self.training_op = tf.train.AdamOptimizer(0.001).minimize(-self.total_likelihood, var_list=scope)
         # self.training_op = tf.train.AdamOptimizer(0.001).minimize(-self.total_matches, var_list=scope)
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 

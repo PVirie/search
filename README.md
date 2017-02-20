@@ -1,21 +1,19 @@
 # search
 
 Learning to search
-
-Given a shape and a 2D space where gradients are not well connected (There is a lot of flat plateaus.); this machine will search through the space for that shape, and produce transformation parameters for the tuple.
+Learning to do policy gradient by policy gradient.
 
 ## Why?
 
-Search is a basis of discovery. Any intelligent agent should be able to perform search. Unlike randomly picking up a solution and evaluating it, search should be systematic. An agent that successfully learned how to search should be able to find answer more efficiently in a given random space. 
+Search is a basis of discovery. Any intelligent agent should be able to perform search. Unlike randomly picking up a solution and evaluating it, search should be systematic. An agent that successfully learned how to search should be able to find answer efficiently in a given random space. 
 
 ## Approach
 
-tl,dr; policy-gradient on normal distribution.
-
+tl,dr; a variational LSTM with policy-gradient on normal distribution.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
 
 ### Prerequisites
 
