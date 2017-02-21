@@ -98,7 +98,7 @@ def Invert_Transformer(U, theta, kernel_size, out_size, blur=100, name='InvertTr
             num_channels = tf.shape(input_dim)[3]
             # R.shape = [numbatch*2, 2]
             R_t = tf.slice(tf.reshape(theta, (-1, 3)), [0, 0], [-1, 2])
-            R = tf.reshape(tf.transpose(tf.reshape(R_t, [-1, 2, 2]), [0, 2, 1]), [-1, 2])
+            R = tf.reshape(tf.matrix_inverse(tf.reshape(R_t, [-1, 2, 2])), [-1, 2])
 
             # grid of (x_t, y_t, 1), eq (1) in ref [1]
             out_height = out_size[0]
@@ -146,10 +146,10 @@ if __name__ == "__main__":
     with tf.Session() as sess:
         inp = util.batch_resize([gen.data[0], gen.data[1]], (40, 40))
         imgs = tf.reshape(tf.constant(inp, dtype=tf.float32), [2, 40, 40, 1])
-        thetas = tf.constant(np.asarray([[1, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
+        thetas = tf.constant(np.asarray([[2, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
         transformed = Invert_Transformer(imgs, thetas, (60, 60), (200, 200), 1.0)
 
-        thetas2 = tf.constant(np.asarray([[1, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
+        thetas2 = tf.constant(np.asarray([[2, 0, 0, 0, 1, 0], [0.5, -0.85, -0.5, 0.85, 0.5, -0.25]]), dtype=tf.float32)
         backward = transformer.transformer(transformed, thetas2, (40, 40))
         sess.run(tf.global_variables_initializer())
         bak, out = sess.run((backward, transformed), feed_dict={})

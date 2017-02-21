@@ -23,7 +23,22 @@ def compute_pixel_match(templates, template_sum, examples, thetas, size):
 
 class Network():
 
-    def __init__(self, batches, template_size, canvas_size, total_steps=10):
+    def __init__(self, batches, template_size, canvas_size, total_steps=10, options=None):
+
+        learning_rate = 0.0001
+        policy_gradient = True
+        disconnected_gradient = False
+
+        if options:
+            if 'learning_rate' in options:
+                learning_rate = options['learning_rate']
+            if 'policy_gradient' in options:
+                policy_gradient = options['policy_gradient']
+            if 'disconnected_gradient' in options:
+                disconnected_gradient = options['disconnected_gradient']
+
+        print "Building a network with ", learning_rate, policy_gradient, disconnected_gradient
+
         self.sess = tf.Session()
         self.template_numel = template_size[0] * template_size[1]
         self.canvas_numel = canvas_size[0] * canvas_size[1]
@@ -46,10 +61,12 @@ class Network():
                     tf.get_variable_scope().reuse_variables()
 
                 output = means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances
-                match = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, output, template_size)
-                match_means = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, means, template_size)
-                # match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
-                # match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
+                if disconnected_gradient:
+                    match = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, output, template_size)
+                    match_means = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, means, template_size)
+                else:
+                    match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
+                    match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
                 likelihood = tf.stop_gradient(tf.maximum(match - match_means, 0.0)) * independent_log_normal_distribution(tf.stop_gradient(output), means, variances)
                 input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
 
@@ -57,10 +74,11 @@ class Network():
                 means = output_tuple[0]
                 variances = output_tuple[1]
 
-                total_matches = total_matches + tf.reduce_sum(match) * float(i) / total_steps
-                # total_matches = tf.reduce_sum(match)
+                if disconnected_gradient:
+                    total_matches = total_matches + tf.reduce_sum(match) / total_steps
+                else:
+                    total_matches = tf.reduce_sum(match)
                 total_likelihood = total_likelihood + tf.reduce_sum(likelihood) * float(i) / total_steps
-                # total_likelihood = tf.reduce_sum(likelihood)
 
             self.total_matches = total_matches
             self.total_likelihood = total_likelihood
@@ -68,8 +86,11 @@ class Network():
         scope = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope="model")
         print "Total variable", [v.name for v in scope]
 
-        self.training_op = tf.train.AdamOptimizer(0.0001).minimize(-self.total_likelihood, var_list=scope)
-        # self.training_op = tf.train.AdamOptimizer(0.001).minimize(-self.total_matches, var_list=scope)
+        if policy_gradient:
+            self.training_op = tf.train.AdamOptimizer(learning_rate).minimize(-self.total_likelihood, var_list=scope)
+        else:
+            self.training_op = tf.train.AdamOptimizer(learning_rate).minimize(-self.total_matches, var_list=scope)
+
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
         self.outputs = output
@@ -117,4 +138,4 @@ if __name__ == "__main__":
         means = tf.zeros([20, 6], dtype=tf.float32)
         variances = tf.ones([20, 6], dtype=tf.float32)
         sess.run(tf.global_variables_initializer())
-        print sess.run(independent_normal_distribution(xs, means, variances))
+        print sess.run(independent_log_normal_distribution(xs, means, variances))
