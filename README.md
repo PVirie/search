@@ -1,7 +1,8 @@
 # search
 
 Learning to search
-Learning to do policy gradient by policy gradient.
+
+A learning algorithm that learns learning algorithm.
 
 ## Why?
 
@@ -9,7 +10,7 @@ Search is a basis of discovery. Any intelligent agent should be able to perform 
 
 ## Approach
 
-tl,dr; a variational LSTM with policy-gradient on normal distribution.
+tl,dr; a variational LSTM with policy-gradient.
 
 ## Getting Started
 

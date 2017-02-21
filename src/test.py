@@ -10,7 +10,7 @@ templates, examples, params = gen.gen_batch(100, input_size=(20, 20), output_siz
 print "Figures >>", templates.shape
 print "Examples >>", examples.shape
 
-nn = ann.Network(100, (20, 20), (50, 50), 60)
+nn = ann.Network(100, (20, 20), (50, 50), 100)
 nn.load_session("../artifacts/" + "test_weight")
 drawn, out_params = nn.draw(templates, examples, params)
 print params[0]
