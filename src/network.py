@@ -16,8 +16,7 @@ def independent_log_normal_distribution(xs, means, variances):
 
 def compute_pixel_match(templates, template_sum, examples, thetas, size):
     gen = transformer.transformer(examples, thetas, size)
-    gen_sum = tf.reduce_sum(gen, axis=[1, 2, 3]) + 1e-8
-    match = tf.reduce_sum(templates * gen, axis=[1, 2, 3]) / (template_sum * gen_sum)
+    match = tf.exp(-tf.reduce_mean(tf.squared_difference(templates, gen), axis=[1, 2, 3]))
     return match
 
 
