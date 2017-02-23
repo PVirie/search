@@ -16,7 +16,7 @@ def independent_log_normal_distribution(xs, means, variances):
 
 def compute_pixel_match(templates, template_sum, examples, thetas, size):
     gen = transformer.transformer(examples, thetas, size)
-    match = tf.exp(-tf.reduce_mean(tf.squared_difference(templates, gen), axis=[1, 2, 3]))
+    match = 1 - tf.reduce_mean(tf.squared_difference(templates, gen), axis=[1, 2, 3])
     return match
 
 
@@ -51,7 +51,7 @@ class Network():
             self.cell = cell.AffineCell()
             state = self.cell.init_state(batches)
             means = tf.constant([[1.0, 0.0, 0.0, 0.0, 1.0, 0.0]], dtype=np.float32)
-            variances = tf.constant([[0.2, 0.2, 0.2, 0.2, 0.2, 0.2]], dtype=np.float32)
+            variances = tf.constant([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]], dtype=np.float32)
             weights = tf.constant([[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]], dtype=np.float32)
             total_matches = 0
             total_likelihood = 0
