@@ -7,7 +7,7 @@ import util
 class AffineCell(tf.contrib.rnn.RNNCell):
 
     def __init__(self):
-        self.lstm_state_size = 100
+        self.lstm_state_size = 40
         self.state_size_ = (self.lstm_state_size, self.lstm_state_size)
         self.output_size_ = (6, 6)
 
@@ -16,8 +16,9 @@ class AffineCell(tf.contrib.rnn.RNNCell):
 
         # internal lstm produces mean + var
         self.lstm = tf.contrib.rnn.LSTMCell(self.lstm_state_size, initializer=tf.random_normal_initializer(0, 0.01), forget_bias=1.0, state_is_tuple=True)
-        # self.rnn = tf.contrib.rnn.MultiRNNCell([self.lstm] * 2, state_is_tuple=True)
-        self.rnn = self.lstm
+        self.rnn = tf.contrib.rnn.MultiRNNCell([self.lstm] * 3, state_is_tuple=True)
+
+        # self.rnn = self.lstm
 
     @property
     def state_size(self):
