@@ -98,25 +98,19 @@ class Network():
         # Launch the graph.
         self.sess.run(tf.global_variables_initializer())
 
-    def train(self, templates, examples, true_values, session_name, batch_size, max_iteration, continue_from_last=False):
-        if continue_from_last:
-            self.load_session(session_name)
+    def train(self, templates, examples, true_values, batch_size, blur):
+        sum_loss = 0.0
+        total_batches = templates.shape[0] / batch_size
+        for b in xrange(total_batches):
+            tb = templates[(b * batch_size):((b + 1) * batch_size), ...]
+            eb = examples[(b * batch_size):((b + 1) * batch_size), ...]
+            vb = true_values[(b * batch_size):((b + 1) * batch_size), ...]
+            _, loss, out = self.sess.run((self.training_op, self.total_matches, self.outputs), feed_dict={self.gpu_templates: expand_last_dim(tb), self.gpu_examples: expand_last_dim(eb), self.gpu_true: vb, self.blur: blur})
+            sum_loss += loss
+        print out[0]
+        print sum_loss / total_batches
 
-        for step in xrange(max_iteration):
-            sum_loss = 0.0
-            total_batches = templates.shape[0] / batch_size
-            blur = 100.0 * (1 - step * 1.0 / max_iteration) + 5
-            for b in xrange(total_batches):
-                tb = templates[(b * batch_size):((b + 1) * batch_size), ...]
-                eb = examples[(b * batch_size):((b + 1) * batch_size), ...]
-                vb = true_values[(b * batch_size):((b + 1) * batch_size), ...]
-                _, loss, out = self.sess.run((self.training_op, self.total_matches, self.outputs), feed_dict={self.gpu_templates: expand_last_dim(tb), self.gpu_examples: expand_last_dim(eb), self.gpu_true: vb, self.blur: blur})
-                sum_loss += loss
-            print out[0]
-            print sum_loss / total_batches
-            if step % 100 == 0:
-                self.saver.save(self.sess, session_name)
-
+    def save(self, session_name):
         self.saver.save(self.sess, session_name)
 
     def load_session(self, session_name):
