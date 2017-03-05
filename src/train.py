@@ -11,7 +11,7 @@ args = parser.parse_args()
 
 template_size = (20, 20)
 canvas_size = (50, 50)
-batch_size = 100
+batch_size = 1000
 nn = ann.Network(batch_size, template_size, canvas_size, 100, {'learning_rate': args.rate, 'disconnected_gradient': args.dg, 'policy_gradient': args.pg})
 if args.cont:
     nn.load_session("../artifacts/" + "test_weight")
