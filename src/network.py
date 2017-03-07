@@ -24,7 +24,7 @@ class Network():
 
     def __init__(self, batches, template_size, canvas_size, total_steps=10, options=None):
 
-        learning_rate = 0.0001
+        learning_rate = 0.001
         policy_gradient = True
         disconnected_gradient = False
 
@@ -51,6 +51,7 @@ class Network():
             self.cell = cell.AffineCell()
             state = self.cell.init_state(batches)
             means = tf.constant([[1.0, 0.0, 0.0, 0.0, 1.0, 0.0]], dtype=np.float32)
+            match = 0
             variances = tf.constant([[0.1, 0.1, 0.1, 0.1, 0.1, 0.1]], dtype=np.float32)
             weights = tf.constant([[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]], dtype=np.float32)
             total_matches = 0
@@ -60,6 +61,7 @@ class Network():
                     tf.get_variable_scope().reuse_variables()
 
                 output = means + tf.random_normal([batches, 6], 0.0, 1.0, dtype=tf.float32) * variances
+                prev_match = match
                 if disconnected_gradient:
                     match = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, output, template_size)
                     match_means = compute_pixel_match(self.gpu_templates, self.template_sum, self.gpu_examples, means, template_size)
@@ -67,7 +69,7 @@ class Network():
                     match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
                     match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
                 likelihood = tf.stop_gradient(tf.maximum(match - match_means, 0.0)) * independent_log_normal_distribution(tf.stop_gradient(output), means, variances)
-                input = tf.concat([tf.reshape(tf.stop_gradient(match), [-1, 1]), output], 1)
+                input = tf.concat([tf.reshape(tf.stop_gradient(match - prev_match), [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(input, state)
                 means = output_tuple[0]

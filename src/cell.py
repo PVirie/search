@@ -7,7 +7,7 @@ import util
 class AffineCell(tf.contrib.rnn.RNNCell):
 
     def __init__(self):
-        self.lstm_state_size = 40
+        self.lstm_state_size = 50
         self.state_size_ = (self.lstm_state_size, self.lstm_state_size)
         self.output_size_ = (6, 6)
 
@@ -16,7 +16,7 @@ class AffineCell(tf.contrib.rnn.RNNCell):
 
         # internal lstm produces mean + var
         self.lstm = tf.contrib.rnn.LSTMCell(self.lstm_state_size, initializer=tf.random_normal_initializer(0, 0.01), forget_bias=1.0, state_is_tuple=True)
-        self.rnn = tf.contrib.rnn.MultiRNNCell([self.lstm] * 3, state_is_tuple=True)
+        self.rnn = tf.contrib.rnn.MultiRNNCell([self.lstm] * 2, state_is_tuple=True)
 
         # self.rnn = self.lstm
 
@@ -36,8 +36,8 @@ class AffineCell(tf.contrib.rnn.RNNCell):
 
         lstm_output, lstm_out_state = self.rnn(self.layers(inputs), state)
         projected_output = self.projection_layers(lstm_output)
-        out_mean = tf.slice(projected_output, [0, 0], [-1, 6]) * 0.1 + tf.slice(inputs, [0, 1], [-1, 6])
-        out_var = tf.slice(projected_output, [0, 6], [-1, 6]) * 0.1 + tf.constant([[0.101, 0.101, 0.101, 0.101, 0.101, 0.101]], dtype=tf.float32)
+        out_mean = tf.slice(projected_output, [0, 0], [-1, 6]) * 0.2 + tf.slice(inputs, [0, 1], [-1, 6])
+        out_var = tf.slice(projected_output, [0, 6], [-1, 6]) * 0.2 + tf.constant([[0.201, 0.201, 0.201, 0.201, 0.201, 0.201]], dtype=tf.float32)
 
         return (out_mean, out_var), lstm_out_state
 
