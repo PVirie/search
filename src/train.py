@@ -12,12 +12,13 @@ args = parser.parse_args()
 template_size = (20, 20)
 canvas_size = (50, 50)
 batch_size = 100
+
+templates, examples, true_values = gen.gen_batch(1000, input_size=template_size, output_size=canvas_size, blur=0.2)
 nn = ann.Network(batch_size, template_size, canvas_size, 100, {'learning_rate': args.rate, 'disconnected_gradient': args.dg, 'policy_gradient': args.pg})
 if args.cont:
     nn.load_session("../artifacts/" + "test_weight")
 
 for step in xrange(100000):
-    templates, examples, true_values = gen.gen_batch(1000, input_size=template_size, output_size=canvas_size, blur=0.2)
     nn.train(templates, examples, true_values, batch_size=batch_size, blur=1.0)
     if step % 100 == 0:
         nn.save("../artifacts/" + "test_weight")
