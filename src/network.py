@@ -69,7 +69,7 @@ class Network():
                     match = 1 - tf.reduce_mean(tf.squared_difference(output, self.gpu_true) * weights, axis=[1])
                     match_means = 1 - tf.reduce_mean(tf.squared_difference(means, self.gpu_true) * weights, axis=[1])
                 likelihood = tf.stop_gradient(tf.maximum(match - match_means, 0.0)) * independent_log_normal_distribution(tf.stop_gradient(output), means, variances)
-                input = tf.concat([tf.reshape(match - prev_match), [-1, 1], output], 1)
+                input = tf.concat([tf.reshape(match - prev_match, [-1, 1]), output], 1)
 
                 output_tuple, state = self.cell(tf.stop_gradient(input), state)
                 means = output_tuple[0]
