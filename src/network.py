@@ -16,7 +16,7 @@ def independent_log_normal_distribution(xs, means, variances):
 
 def compute_pixel_match(templates, template_sum, examples, thetas, size):
     gen = transformer.transformer(examples, thetas, size)
-    match = 1 - tf.reduce_mean(tf.squared_difference(templates, gen), axis=[1, 2, 3])
+    match = 1 - tf.reduce_sum(tf.squared_difference(templates, gen), axis=[1, 2, 3])
     return match
 
 
@@ -76,7 +76,7 @@ class Network():
                 variances = output_tuple[1]
 
                 if disconnected_gradient:
-                    total_matches = total_matches + tf.reduce_sum(match) / total_steps
+                    total_matches = tf.reduce_sum(match)
                 else:
                     total_matches = tf.reduce_sum(match)
                 total_likelihood = total_likelihood + tf.reduce_sum(likelihood) * float(i) / total_steps
