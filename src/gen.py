@@ -9,8 +9,8 @@ import cv2
 
 data = []
 template = []
-for file in sorted(os.listdir("../data")):
-    fullname = os.path.join("../data", file)
+for file in sorted(os.listdir("./data")):
+    fullname = os.path.join("./data", file)
     if file.endswith(".png"):
         print "Reading:", fullname
         img = 1 - util.convert_255_2_1(cv2.imread(fullname, cv2.IMREAD_GRAYSCALE))

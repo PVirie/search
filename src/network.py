@@ -120,8 +120,8 @@ class Network():
         self.saver.restore(self.sess, tf.train.latest_checkpoint(directory))
 
     def draw(self, templates, examples, true_values):
-        drawn, values = self.sess.run((self.gen, self.outputs), feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
-        return drawn, values
+        drawn, values, matches = self.sess.run((self.gen, self.outputs, self.total_matches), feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
+        return drawn, values, matches
 
 
 if __name__ == "__main__":

@@ -7,7 +7,7 @@ import util
 class AffineCell(tf.contrib.rnn.RNNCell):
 
     def __init__(self):
-        self.lstm_state_size = 50
+        self.lstm_state_size = 200
         self.state_size_ = (self.lstm_state_size, self.lstm_state_size)
         self.output_size_ = (6, 6)
 
