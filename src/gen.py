@@ -44,6 +44,8 @@ def random_thetas(shape=(1000, 1000), object_shape=(220, 220)):
 def gen_transform(shape, thetas, index=randint(0, len(data) - 1), kernel=(1, 1)):
     if thetas is None:
         thetas = random_thetas(shape, data[index].shape)
+    else:
+        thetas = np.reshape(thetas, (2, 3))
     return cv2.blur(cv2.warpAffine(data[index], thetas, shape), kernel), thetas
 
 
@@ -66,7 +68,7 @@ def gen_batch(batches, input_size=(40, 40), output_size=(200, 200), blur=1.0):
         g_.append(g)
         v[0, 2] = v[0, 2] * 2.0 / 1000 - 1.0
         v[1, 2] = v[1, 2] * 2.0 / 1000 - 1.0
-        v_[i, ...] = np.reshape(v, (1, 6))
+        v_[i, ...] = np.reshape(v, (6))
     return util.batch_resize(t_, input_size), util.batch_resize(g_, output_size), v_
 
 

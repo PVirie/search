@@ -6,6 +6,7 @@ import numpy as np
 import argparse
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--plot", help="run plot", action="store_true")
 parser.add_argument("--test", help="run test", action="store_true")
 parser.add_argument("--cont", help="continue mode", action="store_true")
 parser.add_argument("--rate", help="learning rate", type=float)
@@ -16,8 +17,9 @@ args = parser.parse_args()
 template_size = (20, 20)
 canvas_size = (50, 50)
 batch_size = 100
+steps = 100
 
-nn = ann.Network(batch_size, template_size, canvas_size, 100, {'learning_rate': args.rate, 'disconnected_gradient': args.dg, 'policy_gradient': args.pg})
+nn = ann.Network(batch_size, template_size, canvas_size, steps, {'learning_rate': args.rate, 'disconnected_gradient': args.dg, 'policy_gradient': args.pg})
 
 if args.test:
     nn.load_session("./artifacts/" + "test_weight")
@@ -25,12 +27,24 @@ if args.test:
     templates, examples, params = gen.gen_batch(100, input_size=template_size, output_size=canvas_size, blur=0.2)
     drawn, out_params, matches = nn.draw(templates, examples, params)
     print matches
-    print params, out_params
+    print params, out_params[len(out_params) - 1]
 
     ts = util.make_tile(np.reshape(examples, (examples.shape[0], examples.shape[1], examples.shape[2], 1)), 800, 800, False)
     gs = util.make_tile(np.reshape(drawn, (drawn.shape[0], drawn.shape[1], drawn.shape[2], 1)), 800, 800, False)
     cv2.imshow("template", ts)
     cv2.imshow("generated", gs)
+    cv2.waitKey(0)
+
+elif args.plot:
+    nn.load_session("./artifacts/" + "test_weight")
+
+    templates, examples, params = gen.gen_batch(100, input_size=template_size, output_size=canvas_size, blur=0.2)
+    drawns = nn.draw_sequence(templates, examples, params)
+    drawns.append(1 - examples)
+
+    ps = util.plot_progress(drawns, selected_ids=[0, 10, 20, 30, 40, 50, 60, 70, 80], display_steps=20, include_last=True)
+    cv2.imshow("plotted", ps)
+
     cv2.waitKey(0)
 
 else:

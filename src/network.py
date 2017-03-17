@@ -29,11 +29,11 @@ class Network():
         disconnected_gradient = False
 
         if options:
-            if 'learning_rate' in options:
+            if 'learning_rate' in options and options['learning_rate'] is not None:
                 learning_rate = options['learning_rate']
-            if 'policy_gradient' in options:
+            if 'policy_gradient' in options and options['policy_gradient'] is not None:
                 policy_gradient = options['policy_gradient']
-            if 'disconnected_gradient' in options:
+            if 'disconnected_gradient' in options and options['disconnected_gradient'] is not None:
                 disconnected_gradient = options['disconnected_gradient']
 
         print "Building a network with ", learning_rate, policy_gradient, disconnected_gradient
@@ -56,6 +56,8 @@ class Network():
             weights = tf.constant([[1.0, 1.0, 1.0, 1.0, 1.0, 1.0]], dtype=np.float32)
             total_matches = 0
             total_likelihood = 0
+            self.gens = []
+
             for i in xrange(total_steps):
                 if i > 0:
                     tf.get_variable_scope().reuse_variables()
@@ -78,6 +80,10 @@ class Network():
                 total_matches = tf.reduce_sum(match)
                 total_likelihood = total_likelihood + tf.reduce_sum(likelihood) * float(i) / total_steps
 
+                self.gens.append(putter.Invert_Transformer(self.gpu_templates, output, template_size, canvas_size, self.blur))
+
+            self.outputs = output
+
             self.total_matches = total_matches
             self.total_likelihood = total_likelihood
 
@@ -91,8 +97,7 @@ class Network():
 
         self.saver = tf.train.Saver(var_list=scope, keep_checkpoint_every_n_hours=1)
 
-        self.outputs = output
-        self.gen = putter.Invert_Transformer(self.gpu_templates, self.outputs, template_size, canvas_size, self.blur)
+        self.gen = self.gens[len(self.gens) - 1]
 
         # Launch the graph.
         self.sess.run(tf.global_variables_initializer())
@@ -123,6 +128,9 @@ class Network():
         drawn, values, matches = self.sess.run((self.gen, self.outputs, self.total_matches), feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
         return drawn, values, matches
 
+    def draw_sequence(self, templates, examples, true_values):
+        drawns = self.sess.run(self.gens, feed_dict={self.gpu_templates: expand_last_dim(templates), self.gpu_examples: expand_last_dim(examples), self.gpu_true: true_values, self.blur: 1.0})
+        return drawns
 
 if __name__ == "__main__":
     with tf.Session() as sess:

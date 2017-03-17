@@ -58,7 +58,50 @@ def make_tile(mat, rows, cols, flip):
         for y in xrange(int(math.floor(cols / c))):
             canvas[(x * r):((x + 1) * r), (y * c):((y + 1) * c), :] = np.transpose(mat[i, ...], (1, 0, 2)) if flip else mat[i, ...]
             i = (i + step) % b
+            canvas[:, (y + 1) * c - 1, :] = 1
+        canvas[(x + 1) * r - 1, :, :] = 1
 
+    return canvas
+
+
+def plot_progress(mats, selected_ids, display_steps, include_last):
+
+    s = mats[0].shape
+    r = len(selected_ids)
+    c = display_steps
+    if len(s) is 3:
+        canvas = np.zeros((r * s[1], c * s[2], 1), dtype=mats[0].dtype)
+        t = (s[1], s[2], 1)
+    elif len(s) is 4 and s[3] is 1:
+        canvas = np.zeros((r * s[1], c * s[2], 1), dtype=mats[0].dtype)
+        t = (s[1], s[2], 1)
+    elif len(s) is 4 and s[3] is 3:
+        canvas = np.zeros((r * s[1], c * s[2], 3), dtype=mats[0].dtype)
+        t = (s[1], s[2], 3)
+
+    a = 2.0 * len(mats) / (display_steps * (display_steps + 1))
+
+    if include_last:
+        for y in xrange(r):
+            v = 0.0
+            i = 0.0
+            for x in xrange(c - 1):
+                canvas[(y * s[1]):((y + 1) * s[1]), (x * s[2]):((x + 1) * s[2]), :] = np.reshape(mats[int(i)][selected_ids[y], ...], t)
+                canvas[:, (x + 1) * s[2] - 1, :] = 1
+                i = i + v
+                v = v + a
+            canvas[(y * s[1]):((y + 1) * s[1]), ((c - 1) * s[2]):(c * s[2]), :] = np.reshape(mats[len(mats) - 1][selected_ids[y], ...], t)
+            canvas[(y + 1) * s[1] - 1, :, :] = 1
+    else:
+        for y in xrange(r):
+            v = 0.0
+            i = 0.0
+            for x in xrange(c):
+                canvas[(y * s[1]):((y + 1) * s[1]), (x * s[2]):((x + 1) * s[2]), :] = np.reshape(mats[int(i)][selected_ids[y], ...], t)
+                canvas[:, (x + 1) * s[2] - 1, :] = 1
+                i = i + v
+                v = v + a
+            canvas[(y + 1) * s[1] - 1, :, :] = 1
     return canvas
 
 
