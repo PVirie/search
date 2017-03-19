@@ -6,6 +6,11 @@ import util
 
 class AffineCell(tf.contrib.rnn.RNNCell):
 
+    # This is the heart of learning to search --- what ever moves it take, the model should not repeat the bad one.
+    # The number of hidden units must also be sufficient to allow to model to "remember" the configurations that have been visited. 
+    # This of course depends on your choice of the activation function; e.g., if the activation function is hyperbolic tangent, 
+    # the network might need more hidden units as the output of hyperbolic tangent is bounded between [-1, 1]. 
+
     def __init__(self):
         self.lstm_state_size = 50
         self.state_size_ = (self.lstm_state_size, self.lstm_state_size)
