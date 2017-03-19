@@ -15,7 +15,7 @@ This technique has the characteristics of both unsupervised learning and reinfor
 ## Approach
 
 tl,dr; an LSTM with policy-gradient.
-Please refer to my blog for more detail.
+Please refer to [my blog](https://pvirie.wordpress.com/2017/03/19/learning-to-search-by-policy-gradient) for more detail.
 
 ## Getting Started
 
